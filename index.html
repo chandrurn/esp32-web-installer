@@ -292,13 +292,16 @@
         <div id="logs"></div>
 
         <div class="footer">
-            Version 3.1 | Using Web Serial API (Same as FluidNC)
+            Version 4.0 | Using esptool-js (Same as FluidNC)
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/esptool-js@0.1.0/bundle.js"></script>
     <script>
+        const { ESPLoader, Transport } = window;
+
         let transport = null;
-        let isConnected = false;
+        let loader = null;
 
         const connectBtn = document.getElementById('connect-btn');
         const eraseBtn = document.getElementById('erase-btn');
@@ -348,18 +351,6 @@
             progressText.textContent = percent + '%';
         }
 
-        async function writeToDevice(data, offset) {
-            if (!transport) throw new Error('Device not connected');
-            
-            const packet = new Uint8Array(data.length + 16);
-            packet[0] = 0x01; // Write command
-            packet.set(new Uint32Array([offset]), 1);
-            packet.set(new Uint32Array([data.length]), 5);
-            packet.set(data, 16);
-            
-            await transport.write(packet);
-        }
-
         connectBtn.addEventListener('click', async () => {
             try {
                 if (!navigator.serial) {
@@ -376,8 +367,12 @@
                 log('Opening serial connection at 115200 baud...', 'info');
                 await port.open({ baudRate: 115200 });
 
-                transport = port;
-                isConnected = true;
+                // Create transport for esptool-js
+                transport = new Transport(port);
+
+                log('Connecting to bootloader...', 'info');
+                loader = new ESPLoader({ transport, baudrate: 115200 });
+                await loader.main();
 
                 log('✓ ESP32 Connected! Ready to erase or flash.', 'success');
 
@@ -395,7 +390,7 @@
         });
 
         eraseBtn.addEventListener('click', async () => {
-            if (!transport || !isConnected) {
+            if (!loader) {
                 showStatus('❌ Not connected. Click Connect first.', 'error');
                 return;
             }
@@ -406,14 +401,7 @@
                 progressContainer.style.display = 'block';
                 updateProgress(0, 100);
 
-                // Send erase command
-                const writer = transport.writable.getWriter();
-                const eraseCmd = new Uint8Array([0x02]); // Erase command
-                await writer.write(eraseCmd);
-                writer.releaseLock();
-
-                // Wait for erase to complete
-                await new Promise(resolve => setTimeout(resolve, 3000));
+                await loader.eraseFlash();
 
                 progressFill.style.width = '100%';
                 progressText.textContent = '100%';
@@ -427,7 +415,7 @@
         });
 
         flashBtn.addEventListener('click', async () => {
-            if (!transport || !isConnected) {
+            if (!loader) {
                 showStatus('❌ Not connected. Click Connect first.', 'error');
                 return;
             }
@@ -436,7 +424,7 @@
                 log('Downloading firmware files...', 'info');
                 progressContainer.style.display = 'block';
 
-                const files = [];
+                const fileArray = [];
                 let totalSize = 0;
 
                 // Download all firmware files
@@ -449,10 +437,9 @@
                     }
 
                     const data = await response.arrayBuffer();
-                    files.push({
-                        data: new Uint8Array(data),
-                        offset: config.offset,
-                        name: config.name
+                    fileArray.push({
+                        address: config.offset,
+                        data: new Uint8Array(data)
                     });
                     totalSize += data.byteLength;
                     log(`✓ Downloaded ${config.name} (${data.byteLength} bytes)`, 'success');
@@ -461,38 +448,28 @@
                 log(`✓ Total downloaded: ${totalSize} bytes`, 'success');
                 log('Flashing firmware to device...', 'info');
 
-                const writer = transport.writable.getWriter();
-                let bytesFilled = 0;
-
-                // Flash each file
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    log(`Flashing ${file.name} at offset 0x${file.offset.toString(16)}...`, 'info');
-                    
-                    // Send flash command with offset and size
-                    const header = new Uint8Array(9);
-                    header[0] = 0x03; // Flash command
-                    new DataView(header.buffer).setUint32(1, file.offset, true);
-                    new DataView(header.buffer).setUint32(5, file.data.length, true);
-                    
-                    await writer.write(header);
-                    await writer.write(file.data);
-
-                    bytesFilled += file.data.length;
-                    updateProgress(bytesFilled, totalSize);
-                }
-
-                writer.releaseLock();
+                // Flash using esptool-js (same as FluidNC)
+                await loader.writeFlash({
+                    fileArray: fileArray,
+                    flashMode: 'dio',
+                    flashFreq: '40m',
+                    flashSize: 'detect',
+                    reportProgress: (fileIndex, written, total) => {
+                        updateProgress(written, total);
+                    }
+                });
 
                 log('✓ Firmware flashed successfully!', 'success');
                 showStatus('✅ Firmware installed! Device rebooting...', 'success');
                 progressFill.style.width = '100%';
                 progressText.textContent = '100%';
 
-                setTimeout(() => {
-                    log('✓ Device rebooted. Your firmware is now running!', 'success');
-                    showStatus('✅ Installation complete! Your ESP32 is ready to use.', 'success');
-                }, 2000);
+                // Wait then soft reset
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                await loader.softReset();
+
+                log('✓ Device rebooted. Your firmware is now running!', 'success');
+                showStatus('✅ Installation complete! Your ESP32 is ready to use.', 'success');
 
             } catch (error) {
                 log(`Error flashing firmware: ${error.message}`, 'error');
