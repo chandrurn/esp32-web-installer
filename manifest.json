@@ -7,15 +7,15 @@
       "chipFamily": "ESP32",
       "parts": [
         {
-          "path": "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/bootloader.bin",
+          "path": "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.bootloader.bin",
           "offset": 4096
         },
         {
-          "path": "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/partitions.bin",
+          "path": "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.partitions.bin",
           "offset": 32768
         },
         {
-          "path": "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/firmware.bin",
+          "path": "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/ID_Teller.bin",
           "offset": 65536
         }
       ]
