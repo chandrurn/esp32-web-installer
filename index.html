@@ -4,64 +4,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My ESP32 tele upload - Installer</title>
+    <script type="module" src="https://esphome.github.io/esp-web-tools/js/index.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
         }
-
         .container {
+            max-width: 600px;
+            margin: 0 auto;
             background: white;
             border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-            max-width: 600px;
-            width: 100%;
             padding: 40px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
         }
-
         h1 {
             color: #333;
             margin-bottom: 10px;
-            font-size: 28px;
+            text-align: center;
         }
-
         .subtitle {
+            text-align: center;
             color: #666;
             margin-bottom: 30px;
-            font-size: 14px;
         }
-
         .info-box {
             background: #f0f4ff;
             border-left: 4px solid #667eea;
             padding: 15px;
             margin-bottom: 25px;
             border-radius: 4px;
-            font-size: 14px;
             color: #333;
         }
-
-        .steps {
-            margin-bottom: 30px;
+        esp-web-install-button {
+            display: block;
+            margin: 20px 0;
         }
-
+        .steps {
+            margin: 30px 0;
+        }
         .step {
             display: flex;
             margin-bottom: 15px;
-            font-size: 14px;
         }
-
         .step-number {
             background: #667eea;
             color: white;
@@ -75,89 +63,10 @@
             font-weight: bold;
             flex-shrink: 0;
         }
-
         .step-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
             color: #333;
-        }
-
-        .button-container {
-            margin-bottom: 20px;
-        }
-
-        button {
-            width: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 14px 20px;
-            border-radius: 6px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        button:active {
-            transform: translateY(0);
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
-        }
-
-        #status {
-            padding: 15px;
-            border-radius: 6px;
-            margin-top: 20px;
-            display: none;
-            font-size: 14px;
-        }
-
-        #status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            display: block;
-        }
-
-        #status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            display: block;
-        }
-
-        #status.info {
-            background: #d1ecf1;
-            color: #0c5460;
-            border: 1px solid #bee5eb;
-            display: block;
-        }
-
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            font-size: 12px;
-            color: #999;
-            text-align: center;
-        }
-
-        .version {
-            color: #667eea;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
         }
     </style>
 </head>
@@ -177,60 +86,22 @@
             </div>
             <div class="step">
                 <div class="step-number">2</div>
-                <div class="step-content">Click the "Install Firmware" button below</div>
+                <div class="step-content">Click the install button below</div>
             </div>
             <div class="step">
                 <div class="step-number">3</div>
-                <div class="step-content">Select your ESP32 device from the port list</div>
+                <div class="step-content">Select your device port when prompted</div>
             </div>
             <div class="step">
                 <div class="step-number">4</div>
-                <div class="step-content">Wait for the installation to complete</div>
+                <div class="step-content">Wait for installation to complete</div>
             </div>
         </div>
 
-        <div class="button-container">
-            <button id="install-btn">Install Firmware</button>
-        </div>
-
-        <div id="status"></div>
-
-        <div class="footer">
-            Version <span class="version">1.0.0</span> | Powered by ESP Web Tools
-        </div>
+        <esp-web-install-button
+            manifest="https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/manifest.json">
+            <button slot="activate">Install Firmware</button>
+        </esp-web-install-button>
     </div>
-
-    <script type="module">
-        import { EsphomeInstaller } from 'https://esphome.github.io/esp-web-tools/js/index.js';
-
-        const button = document.getElementById('install-btn');
-        const status = document.getElementById('status');
-
-        button.addEventListener('click', async () => {
-            button.disabled = true;
-            status.className = 'info';
-            status.innerHTML = '⏳ Starting installation...';
-
-            try {
-                const installer = new EsphomeInstaller();
-                await installer.startFlashing(
-                    'https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/manifest.json'
-                );
-                status.className = 'success';
-                status.innerHTML = '✅ Installation complete! Your ESP32 is ready to use.';
-            } catch (error) {
-                status.className = 'error';
-                status.innerHTML = `❌ Installation failed: ${error.message}`;
-                button.disabled = false;
-            }
-        });
-
-        // Check for Web Serial API support
-        if (!navigator.serial) {
-            button.disabled = true;
-            status.className = 'error';
-            status.innerHTML = '❌ Web Serial API is not supported in your browser. Please use Chrome, Edge, or Opera.';
-        }
-    </script>
 </body>
 </html>
