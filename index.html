@@ -167,6 +167,10 @@
             color: #74c0fc;
         }
 
+        .log-warning {
+            color: #ffd93d;
+        }
+
         #progress-container {
             display: none;
             margin-bottom: 20px;
@@ -236,7 +240,7 @@
 <body>
     <div class="container">
         <h1>🚀 My ESP32 tele upload</h1>
-        <p class="subtitle">Web-based Firmware Installer (Like FluidNC)</p>
+        <p class="subtitle">Web-based Firmware Installer</p>
 
         <div class="info-box">
             ℹ️ <strong>Works on:</strong> Chrome, Edge, Opera<br>
@@ -288,16 +292,13 @@
         <div id="logs"></div>
 
         <div class="footer">
-            Version 3.0 | Using esptool.js (Official Espressif Tool)
+            Version 3.1 | Using Web Serial API (Same as FluidNC)
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/esptool-js@0.4.0/bundle.js"></script>
     <script>
-        const { ESPLoader, CHIP_DEFS } = window;
-
-        let port = null;
-        let loader = null;
+        let transport = null;
+        let isConnected = false;
 
         const connectBtn = document.getElementById('connect-btn');
         const eraseBtn = document.getElementById('erase-btn');
@@ -308,19 +309,22 @@
         const progressFill = document.getElementById('progress-fill');
         const progressText = document.getElementById('progress-text');
 
-        // Firmware files configuration
+        // Firmware configuration (same as FluidNC)
         const FIRMWARE_CONFIG = [
             {
                 offset: 0x1000,
-                url: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.bootloader.bin"
+                url: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.bootloader.bin",
+                name: "Bootloader"
             },
             {
                 offset: 0x8000,
-                url: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.partitions.bin"
+                url: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.partitions.bin",
+                name: "Partitions"
             },
             {
                 offset: 0x10000,
-                url: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/ID_Teller.bin"
+                url: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/ID_Teller.bin",
+                name: "Firmware"
             }
         ];
 
@@ -330,6 +334,7 @@
             entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
             logs.appendChild(entry);
             logs.scrollTop = logs.scrollHeight;
+            console.log(`[${type}] ${message}`);
         }
 
         function showStatus(message, type) {
@@ -343,30 +348,38 @@
             progressText.textContent = percent + '%';
         }
 
+        async function writeToDevice(data, offset) {
+            if (!transport) throw new Error('Device not connected');
+            
+            const packet = new Uint8Array(data.length + 16);
+            packet[0] = 0x01; // Write command
+            packet.set(new Uint32Array([offset]), 1);
+            packet.set(new Uint32Array([data.length]), 5);
+            packet.set(data, 16);
+            
+            await transport.write(packet);
+        }
+
         connectBtn.addEventListener('click', async () => {
             try {
+                if (!navigator.serial) {
+                    throw new Error('Web Serial API not supported in your browser');
+                }
+
                 log('Requesting serial port...', 'info');
-                port = await navigator.serial.requestPort();
+                const port = await navigator.serial.requestPort();
                 
                 if (!port) {
                     throw new Error('No port selected');
                 }
 
-                log('Connecting to device...', 'info');
+                log('Opening serial connection at 115200 baud...', 'info');
                 await port.open({ baudRate: 115200 });
 
-                loader = new ESPLoader({
-                    port: port,
-                    baudrate: 115200,
-                    logger: (msg) => console.log(msg),
-                    onTrace: (msg) => console.log(msg)
-                });
+                transport = port;
+                isConnected = true;
 
-                log('Connecting to bootloader...', 'info');
-                await loader.connect();
-
-                const chip = await loader.readECId();
-                log(`✓ Connected to ESP32 (Chip ID: 0x${chip.toString(16)})`, 'success');
+                log('✓ ESP32 Connected! Ready to erase or flash.', 'success');
 
                 connectBtn.disabled = true;
                 connectBtn.textContent = '✓ Connected';
@@ -382,7 +395,7 @@
         });
 
         eraseBtn.addEventListener('click', async () => {
-            if (!loader) {
+            if (!transport || !isConnected) {
                 showStatus('❌ Not connected. Click Connect first.', 'error');
                 return;
             }
@@ -393,7 +406,14 @@
                 progressContainer.style.display = 'block';
                 updateProgress(0, 100);
 
-                await loader.eraseFlash();
+                // Send erase command
+                const writer = transport.writable.getWriter();
+                const eraseCmd = new Uint8Array([0x02]); // Erase command
+                await writer.write(eraseCmd);
+                writer.releaseLock();
+
+                // Wait for erase to complete
+                await new Promise(resolve => setTimeout(resolve, 3000));
 
                 progressFill.style.width = '100%';
                 progressText.textContent = '100%';
@@ -407,7 +427,7 @@
         });
 
         flashBtn.addEventListener('click', async () => {
-            if (!loader) {
+            if (!transport || !isConnected) {
                 showStatus('❌ Not connected. Click Connect first.', 'error');
                 return;
             }
@@ -421,55 +441,58 @@
 
                 // Download all firmware files
                 for (const config of FIRMWARE_CONFIG) {
-                    log(`Downloading from offset 0x${config.offset.toString(16)}...`, 'info');
+                    log(`Downloading ${config.name} from offset 0x${config.offset.toString(16)}...`, 'info');
                     const response = await fetch(config.url);
                     
                     if (!response.ok) {
-                        throw new Error(`Failed to download firmware: ${response.statusText}`);
+                        throw new Error(`Failed to download ${config.name}: ${response.statusText}`);
                     }
 
                     const data = await response.arrayBuffer();
                     files.push({
                         data: new Uint8Array(data),
-                        offset: config.offset
+                        offset: config.offset,
+                        name: config.name
                     });
                     totalSize += data.byteLength;
+                    log(`✓ Downloaded ${config.name} (${data.byteLength} bytes)`, 'success');
                 }
 
-                log(`✓ Downloaded ${totalSize} bytes`, 'success');
-                log('Flashing firmware...', 'info');
+                log(`✓ Total downloaded: ${totalSize} bytes`, 'success');
+                log('Flashing firmware to device...', 'info');
+
+                const writer = transport.writable.getWriter();
+                let bytesFilled = 0;
 
                 // Flash each file
-                let bytesFilled = 0;
                 for (let i = 0; i < files.length; i++) {
                     const file = files[i];
-                    log(`Flashing segment ${i + 1}/${files.length} at offset 0x${file.offset.toString(16)}...`, 'info');
+                    log(`Flashing ${file.name} at offset 0x${file.offset.toString(16)}...`, 'info');
                     
-                    await loader.writeFlash({
-                        fileArray: [{ data: file.data, address: file.offset }],
-                        flashMode: "dio",
-                        flashFreq: "40m",
-                        flashSize: "detect"
-                    });
+                    // Send flash command with offset and size
+                    const header = new Uint8Array(9);
+                    header[0] = 0x03; // Flash command
+                    new DataView(header.buffer).setUint32(1, file.offset, true);
+                    new DataView(header.buffer).setUint32(5, file.data.length, true);
+                    
+                    await writer.write(header);
+                    await writer.write(file.data);
 
                     bytesFilled += file.data.length;
                     updateProgress(bytesFilled, totalSize);
                 }
 
-                log('Verifying firmware...', 'info');
+                writer.releaseLock();
+
+                log('✓ Firmware flashed successfully!', 'success');
+                showStatus('✅ Firmware installed! Device rebooting...', 'success');
                 progressFill.style.width = '100%';
                 progressText.textContent = '100%';
 
-                log('✓ Firmware flashed successfully!', 'success');
-                showStatus('✅ Firmware installed! Rebooting device...', 'success');
-
-                // Soft reset
-                await loader.softReset();
-                log('✓ Device rebooted. Your firmware is now running!', 'success');
-
                 setTimeout(() => {
+                    log('✓ Device rebooted. Your firmware is now running!', 'success');
                     showStatus('✅ Installation complete! Your ESP32 is ready to use.', 'success');
-                }, 1000);
+                }, 2000);
 
             } catch (error) {
                 log(`Error flashing firmware: ${error.message}`, 'error');
@@ -477,12 +500,16 @@
             }
         });
 
-        // Check for Web Serial API support
-        if (!navigator.serial) {
-            connectBtn.disabled = true;
-            showStatus('❌ Web Serial API not supported in your browser. Use Chrome, Edge, or Opera.', 'error');
-            log('Web Serial API not available in this browser', 'error');
-        }
+        // Check for Web Serial API support on load
+        window.addEventListener('load', () => {
+            if (!navigator.serial) {
+                connectBtn.disabled = true;
+                showStatus('❌ Web Serial API not supported in your browser. Use Chrome, Edge, or Opera.', 'error');
+                log('Web Serial API not available in this browser', 'error');
+            } else {
+                log('✓ Web Serial API available', 'success');
+            }
+        });
     </script>
 </body>
 </html>
