@@ -38,6 +38,16 @@
             margin-bottom: 25px;
             border-radius: 4px;
             color: #333;
+            font-size: 14px;
+        }
+        .warning-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+            color: #856404;
+            font-size: 14px;
         }
         esp-web-install-button {
             display: block;
@@ -68,6 +78,32 @@
             display: flex;
             align-items: center;
         }
+        .diagnostic-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-top: 15px;
+            width: 100%;
+        }
+        .diagnostic-btn:hover {
+            background: #5a6268;
+        }
+        #diagnostic-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 12px;
+            margin-top: 15px;
+            font-size: 12px;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+            color: #333;
+        }
     </style>
 </head>
 <body>
@@ -76,7 +112,16 @@
         <p class="subtitle">Web-based Firmware Installer</p>
 
         <div class="info-box">
-            ℹ️ This installer works on Chrome, Edge, and Opera browsers. Make sure your ESP32 is connected via USB before starting.
+            ℹ️ This installer works on <strong>Chrome, Edge, and Opera</strong> browsers only. Make sure your ESP32 is connected via USB before starting.
+        </div>
+
+        <div class="warning-box">
+            ⚠️ <strong>Troubleshooting:</strong> If the button doesn't detect your device:
+            <br>1. Close the Arduino IDE or any serial monitor
+            <br>2. Try a different USB cable
+            <br>3. Reinstall your board's USB drivers (CP210x or CH340)
+            <br>4. Use Chrome/Edge (not Firefox)
+            <br>5. Click "Check Serial Ports" below to diagnose
         </div>
 
         <div class="steps">
@@ -102,6 +147,52 @@
             manifest="https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/manifest.json">
             <button slot="activate">Install Firmware</button>
         </esp-web-install-button>
+
+        <button class="diagnostic-btn" onclick="checkSerialPorts()">Check Serial Ports (Diagnostic)</button>
+        <div id="diagnostic-output"></div>
     </div>
+
+    <script>
+        async function checkSerialPorts() {
+            const output = document.getElementById('diagnostic-output');
+            output.innerHTML = 'Checking...<br>';
+
+            try {
+                // Check if Web Serial API is available
+                if (!navigator.serial) {
+                    output.innerHTML += '❌ Web Serial API not available<br>';
+                    output.innerHTML += '⚠️ Your browser does not support Web Serial API<br>';
+                    output.innerHTML += '✅ Use Chrome, Edge, or Opera instead<br>';
+                    return;
+                }
+                
+                output.innerHTML += '✅ Web Serial API is available<br><br>';
+
+                // Get list of ports
+                const ports = await navigator.serial.getPorts();
+                output.innerHTML += `Found ${ports.length} port(s):<br>`;
+
+                if (ports.length === 0) {
+                    output.innerHTML += '❌ No ports detected<br><br>';
+                    output.innerHTML += '💡 Troubleshooting:<br>';
+                    output.innerHTML += '- Check USB cable (data-capable, not power-only)<br>';
+                    output.innerHTML += '- Install USB drivers for your ESP32 board<br>';
+                    output.innerHTML += '- Close Arduino IDE or serial monitor if open<br>';
+                    output.innerHTML += '- Try a different USB port<br>';
+                    output.innerHTML += '- Restart the browser<br>';
+                } else {
+                    ports.forEach((port, index) => {
+                        const info = port.getInfo();
+                        output.innerHTML += `<br>Port ${index + 1}:<br>`;
+                        output.innerHTML += `  Vendor ID: ${info.usbVendorId || 'N/A'}<br>`;
+                        output.innerHTML += `  Product ID: ${info.usbProductId || 'N/A'}<br>`;
+                    });
+                    output.innerHTML += '<br>✅ Your device should be detected by the installer!<br>';
+                }
+            } catch (error) {
+                output.innerHTML += `❌ Error: ${error.message}<br>`;
+            }
+        }
+    </script>
 </body>
 </html>
