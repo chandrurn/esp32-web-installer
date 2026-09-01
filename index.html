@@ -1,492 +1,85 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My ESP32 tele upload - Installer</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .container {
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 700px;
-            width: 100%;
-            padding: 40px;
-        }
-
-        h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 28px;
-            text-align: center;
-        }
-
-        .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 14px;
-            text-align: center;
-        }
-
-        .info-box {
-            background: #f0f4ff;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            margin-bottom: 25px;
-            border-radius: 4px;
-            font-size: 13px;
-            color: #333;
-            line-height: 1.6;
-        }
-
-        .steps {
-            background: #f8f9fa;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 25px;
-        }
-
-        .step {
-            display: flex;
-            margin-bottom: 15px;
-            font-size: 14px;
-        }
-
-        .step:last-child {
-            margin-bottom: 0;
-        }
-
-        .step-number {
-            background: #667eea;
-            color: white;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            font-weight: bold;
-            flex-shrink: 0;
-            font-size: 16px;
-        }
-
-        .step-content {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            color: #333;
-        }
-
-        .controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 25px;
-        }
-
-        .controls button {
-            flex: 1;
-            padding: 12px 20px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-connect {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .btn-connect:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .btn-erase {
-            background: #ff6b6b;
-            color: white;
-        }
-
-        .btn-erase:hover:not(:disabled) {
-            background: #ee5a52;
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            opacity: 0.6;
-        }
-
-        #logs {
-            background: #1e1e1e;
-            color: #00ff00;
-            padding: 15px;
-            border-radius: 6px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            max-height: 300px;
-            overflow-y: auto;
-            margin-bottom: 20px;
-            line-height: 1.5;
-            border: 1px solid #333;
-        }
-
-        .log-entry {
-            margin: 3px 0;
-        }
-
-        .log-error {
-            color: #ff6b6b;
-        }
-
-        .log-success {
-            color: #51cf66;
-        }
-
-        .log-info {
-            color: #74c0fc;
-        }
-
-        .log-warning {
-            color: #ffd93d;
-        }
-
-        #progress-container {
-            display: none;
-            margin-bottom: 20px;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background: #e0e0e0;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            width: 0%;
-            transition: width 0.3s;
-        }
-
-        .progress-text {
-            text-align: center;
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        #status {
-            padding: 15px;
-            border-radius: 6px;
-            display: none;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        #status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            display: block;
-        }
-
-        #status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-            display: block;
-        }
-
-        #status.warning {
-            background: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeaa7;
-            display: block;
-        }
-
-        .footer {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-            font-size: 11px;
-            color: #999;
-            text-align: center;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My ESP32 tele upload - Firmware Installer</title>
+  <script type="module" src="https://unpkg.com/esp-web-tools@10/dist/web/install-button.js?module"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      margin: 0;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      width: 100%;
+      padding: 40px;
+      text-align: center;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+    .info-box {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      margin-bottom: 30px;
+      border-radius: 4px;
+      color: #333;
+      font-size: 13px;
+      line-height: 1.6;
+      text-align: left;
+    }
+    esp-web-install-button {
+      display: block;
+      margin: 30px 0;
+    }
+    .footer {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #eee;
+      font-size: 11px;
+      color: #999;
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🚀 My ESP32 tele upload</h1>
-        <p class="subtitle">Web-based Firmware Installer</p>
+  <div class="container">
+    <h1>🚀 My ESP32 tele upload</h1>
+    <p class="subtitle">Web-based Firmware Installer</p>
 
-        <div class="info-box">
-            ℹ️ <strong>Works on:</strong> Chrome, Edge, Opera<br>
-            <strong>Required:</strong> USB cable, ESP32 connected, CP2102 drivers installed
-        </div>
-
-        <div class="steps">
-            <div class="step">
-                <div class="step-number">1</div>
-                <div class="step-content">
-                    <strong>Connect ESP32 via USB cable</strong>
-                </div>
-            </div>
-            <div class="step">
-                <div class="step-number">2</div>
-                <div class="step-content">
-                    <strong>Click "Connect" to select COM port</strong>
-                </div>
-            </div>
-            <div class="step">
-                <div class="step-number">3</div>
-                <div class="step-content">
-                    <strong>Click "Erase Flash" to clear old firmware</strong>
-                </div>
-            </div>
-            <div class="step">
-                <div class="step-number">4</div>
-                <div class="step-content">
-                    <strong>Click "Flash Firmware" to install new code</strong>
-                </div>
-            </div>
-        </div>
-
-        <div id="status"></div>
-
-        <div class="controls">
-            <button class="btn-connect" id="connect-btn">📡 Connect</button>
-            <button class="btn-erase" id="erase-btn" disabled>🗑️ Erase Flash</button>
-            <button class="btn-connect" id="flash-btn" disabled>⚡ Flash Firmware</button>
-        </div>
-
-        <div id="progress-container">
-            <div class="progress-bar">
-                <div class="progress-fill" id="progress-fill"></div>
-            </div>
-            <div class="progress-text" id="progress-text">0%</div>
-        </div>
-
-        <div id="logs"></div>
-
-        <div class="footer">
-            Version 4.0 | Using esptool-js (Same as FluidNC)
-        </div>
+    <div class="info-box">
+      <strong>ℹ️ How to use:</strong><br>
+      1. Connect your ESP32 via USB<br>
+      2. Click "Install" button below<br>
+      3. Select your COM port<br>
+      4. Firmware will flash automatically<br><br>
+      <strong>Works on:</strong> Chrome, Edge, Opera
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/esptool-js@0.1.0/bundle.js"></script>
-    <script>
-        const { ESPLoader, Transport } = window;
+    <esp-web-install-button manifest="manifest.json">
+      <button slot="activate">📡 Install Firmware</button>
+    </esp-web-install-button>
 
-        let transport = null;
-        let loader = null;
-
-        const connectBtn = document.getElementById('connect-btn');
-        const eraseBtn = document.getElementById('erase-btn');
-        const flashBtn = document.getElementById('flash-btn');
-        const logs = document.getElementById('logs');
-        const status = document.getElementById('status');
-        const progressContainer = document.getElementById('progress-container');
-        const progressFill = document.getElementById('progress-fill');
-        const progressText = document.getElementById('progress-text');
-
-        // Firmware configuration (same as FluidNC)
-        const FIRMWARE_CONFIG = [
-            {
-                offset: 0x1000,
-                url: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.bootloader.bin",
-                name: "Bootloader"
-            },
-            {
-                offset: 0x8000,
-                url: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.partitions.bin",
-                name: "Partitions"
-            },
-            {
-                offset: 0x10000,
-                url: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/ID_Teller.bin",
-                name: "Firmware"
-            }
-        ];
-
-        function log(message, type = 'info') {
-            const entry = document.createElement('div');
-            entry.className = `log-entry log-${type}`;
-            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-            logs.appendChild(entry);
-            logs.scrollTop = logs.scrollHeight;
-            console.log(`[${type}] ${message}`);
-        }
-
-        function showStatus(message, type) {
-            status.textContent = message;
-            status.className = type;
-        }
-
-        function updateProgress(current, total) {
-            const percent = Math.round((current / total) * 100);
-            progressFill.style.width = percent + '%';
-            progressText.textContent = percent + '%';
-        }
-
-        connectBtn.addEventListener('click', async () => {
-            try {
-                if (!navigator.serial) {
-                    throw new Error('Web Serial API not supported in your browser');
-                }
-
-                log('Requesting serial port...', 'info');
-                const port = await navigator.serial.requestPort();
-                
-                if (!port) {
-                    throw new Error('No port selected');
-                }
-
-                log('Opening serial connection at 115200 baud...', 'info');
-                await port.open({ baudRate: 115200 });
-
-                // Create transport for esptool-js
-                transport = new Transport(port);
-
-                log('Connecting to bootloader...', 'info');
-                loader = new ESPLoader({ transport, baudrate: 115200 });
-                await loader.main();
-
-                log('✓ ESP32 Connected! Ready to erase or flash.', 'success');
-
-                connectBtn.disabled = true;
-                connectBtn.textContent = '✓ Connected';
-                eraseBtn.disabled = false;
-                flashBtn.disabled = false;
-
-                showStatus('✅ ESP32 Connected! Ready to erase or flash.', 'success');
-
-            } catch (error) {
-                log(`Error: ${error.message}`, 'error');
-                showStatus(`❌ Connection failed: ${error.message}`, 'error');
-            }
-        });
-
-        eraseBtn.addEventListener('click', async () => {
-            if (!loader) {
-                showStatus('❌ Not connected. Click Connect first.', 'error');
-                return;
-            }
-
-            try {
-                log('⚠️ Erasing flash memory (this may take 30+ seconds)...', 'warning');
-                showStatus('Erasing flash memory...', 'warning');
-                progressContainer.style.display = 'block';
-                updateProgress(0, 100);
-
-                await loader.eraseFlash();
-
-                progressFill.style.width = '100%';
-                progressText.textContent = '100%';
-                log('✓ Flash erased successfully!', 'success');
-                showStatus('✅ Flash erased! Now click "Flash Firmware".', 'success');
-
-            } catch (error) {
-                log(`Error erasing flash: ${error.message}`, 'error');
-                showStatus(`❌ Erase failed: ${error.message}`, 'error');
-            }
-        });
-
-        flashBtn.addEventListener('click', async () => {
-            if (!loader) {
-                showStatus('❌ Not connected. Click Connect first.', 'error');
-                return;
-            }
-
-            try {
-                log('Downloading firmware files...', 'info');
-                progressContainer.style.display = 'block';
-
-                const fileArray = [];
-                let totalSize = 0;
-
-                // Download all firmware files
-                for (const config of FIRMWARE_CONFIG) {
-                    log(`Downloading ${config.name} from offset 0x${config.offset.toString(16)}...`, 'info');
-                    const response = await fetch(config.url);
-                    
-                    if (!response.ok) {
-                        throw new Error(`Failed to download ${config.name}: ${response.statusText}`);
-                    }
-
-                    const data = await response.arrayBuffer();
-                    fileArray.push({
-                        address: config.offset,
-                        data: new Uint8Array(data)
-                    });
-                    totalSize += data.byteLength;
-                    log(`✓ Downloaded ${config.name} (${data.byteLength} bytes)`, 'success');
-                }
-
-                log(`✓ Total downloaded: ${totalSize} bytes`, 'success');
-                log('Flashing firmware to device...', 'info');
-
-                // Flash using esptool-js (same as FluidNC)
-                await loader.writeFlash({
-                    fileArray: fileArray,
-                    flashMode: 'dio',
-                    flashFreq: '40m',
-                    flashSize: 'detect',
-                    reportProgress: (fileIndex, written, total) => {
-                        updateProgress(written, total);
-                    }
-                });
-
-                log('✓ Firmware flashed successfully!', 'success');
-                showStatus('✅ Firmware installed! Device rebooting...', 'success');
-                progressFill.style.width = '100%';
-                progressText.textContent = '100%';
-
-                // Wait then soft reset
-                await new Promise(resolve => setTimeout(resolve, 1000));
-                await loader.softReset();
-
-                log('✓ Device rebooted. Your firmware is now running!', 'success');
-                showStatus('✅ Installation complete! Your ESP32 is ready to use.', 'success');
-
-            } catch (error) {
-                log(`Error flashing firmware: ${error.message}`, 'error');
-                showStatus(`❌ Flash failed: ${error.message}`, 'error');
-            }
-        });
-
-        // Check for Web Serial API support on load
-        window.addEventListener('load', () => {
-            if (!navigator.serial) {
-                connectBtn.disabled = true;
-                showStatus('❌ Web Serial API not supported in your browser. Use Chrome, Edge, or Opera.', 'error');
-                log('Web Serial API not available in this browser', 'error');
-            } else {
-                log('✓ Web Serial API available', 'success');
-            }
-        });
-    </script>
+    <div class="footer">
+      Using official esp-web-tools library from Espressif
+    </div>
+  </div>
 </body>
 </html>
