@@ -1,0 +1,24 @@
+{
+  "name": "My ESP32 tele upload",
+  "version": "1.0.0",
+  "description": "Web-based firmware installer for ESP32 telemetry upload device",
+  "builds": [
+    {
+      "chipFamily": "ESP32",
+      "parts": [
+        {
+          "path": "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/bootloader.bin",
+          "offset": 4096
+        },
+        {
+          "path": "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/partitions.bin",
+          "offset": 32768
+        },
+        {
+          "path": "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/firmware.bin",
+          "offset": 65536
+        }
+      ]
+    }
+  ]
+}
