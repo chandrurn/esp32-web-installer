@@ -4,62 +4,64 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My ESP32 tele upload - Installer</title>
-    <script type="module" src="https://esphome.github.io/esp-web-tools/js/index.js"></script>
     <style>
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        * {
             margin: 0;
-            padding: 20px;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
         }
+
         .container {
-            max-width: 600px;
-            margin: 0 auto;
             background: white;
             border-radius: 12px;
-            padding: 40px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
         }
+
         h1 {
             color: #333;
             margin-bottom: 10px;
-            text-align: center;
+            font-size: 28px;
         }
+
         .subtitle {
-            text-align: center;
             color: #666;
             margin-bottom: 30px;
+            font-size: 14px;
         }
+
         .info-box {
             background: #f0f4ff;
             border-left: 4px solid #667eea;
             padding: 15px;
             margin-bottom: 25px;
             border-radius: 4px;
+            font-size: 14px;
             color: #333;
-            font-size: 14px;
         }
-        .warning-box {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
-            padding: 15px;
-            margin-bottom: 25px;
-            border-radius: 4px;
-            color: #856404;
-            font-size: 14px;
-        }
-        esp-web-install-button {
-            display: block;
-            margin: 20px 0;
-        }
+
         .steps {
-            margin: 30px 0;
+            margin-bottom: 30px;
         }
+
         .step {
             display: flex;
             margin-bottom: 15px;
+            font-size: 14px;
         }
+
         .step-number {
             background: #667eea;
             color: white;
@@ -73,36 +75,123 @@
             font-weight: bold;
             flex-shrink: 0;
         }
+
         .step-content {
-            color: #333;
             display: flex;
-            align-items: center;
+            flex-direction: column;
+            justify-content: center;
+            color: #333;
         }
-        .diagnostic-btn {
-            background: #6c757d;
+
+        .button-container {
+            margin-bottom: 20px;
+        }
+
+        button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 10px 15px;
-            border-radius: 4px;
+            padding: 14px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 600;
             cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        #status {
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 20px;
+            display: none;
+            font-size: 14px;
+        }
+
+        #status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        #status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        #status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        #status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            display: block;
+        }
+
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
             font-size: 12px;
-            margin-top: 15px;
+            color: #999;
+            text-align: center;
+        }
+
+        .version {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        #progress {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .progress-bar {
             width: 100%;
-        }
-        .diagnostic-btn:hover {
-            background: #5a6268;
-        }
-        #diagnostic-output {
-            background: #f8f9fa;
-            border: 1px solid #dee2e6;
+            height: 8px;
+            background: #e0e0e0;
             border-radius: 4px;
-            padding: 12px;
-            margin-top: 15px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .progress-text {
+            text-align: center;
             font-size: 12px;
-            font-family: monospace;
-            max-height: 200px;
-            overflow-y: auto;
-            color: #333;
+            color: #666;
+            margin-top: 8px;
         }
     </style>
 </head>
@@ -112,16 +201,7 @@
         <p class="subtitle">Web-based Firmware Installer</p>
 
         <div class="info-box">
-            ℹ️ This installer works on <strong>Chrome, Edge, and Opera</strong> browsers only. Make sure your ESP32 is connected via USB before starting.
-        </div>
-
-        <div class="warning-box">
-            ⚠️ <strong>Troubleshooting:</strong> If the button doesn't detect your device:
-            <br>1. Close the Arduino IDE or any serial monitor
-            <br>2. Try a different USB cable
-            <br>3. Reinstall your board's USB drivers (CP210x or CH340)
-            <br>4. Use Chrome/Edge (not Firefox)
-            <br>5. Click "Check Serial Ports" below to diagnose
+            ℹ️ This installer works on Chrome, Edge, and Opera browsers. Make sure your ESP32 is connected via USB before starting.
         </div>
 
         <div class="steps">
@@ -131,67 +211,138 @@
             </div>
             <div class="step">
                 <div class="step-number">2</div>
-                <div class="step-content">Click the install button below</div>
+                <div class="step-content">Click the "Install Firmware" button below</div>
             </div>
             <div class="step">
                 <div class="step-number">3</div>
-                <div class="step-content">Select your device port when prompted</div>
+                <div class="step-content">Select your ESP32 device from the port list</div>
             </div>
             <div class="step">
                 <div class="step-number">4</div>
-                <div class="step-content">Wait for installation to complete</div>
+                <div class="step-content">Wait for the installation to complete</div>
             </div>
         </div>
 
-        <esp-web-install-button
-            manifest="https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/manifest.json">
-            <button slot="activate">Install Firmware</button>
-        </esp-web-install-button>
+        <div class="button-container">
+            <button id="install-btn">Install Firmware</button>
+        </div>
 
-        <button class="diagnostic-btn" onclick="checkSerialPorts()">Check Serial Ports (Diagnostic)</button>
-        <div id="diagnostic-output"></div>
+        <div id="progress">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <div class="progress-text" id="progress-text">0%</div>
+        </div>
+
+        <div id="status"></div>
+
+        <div class="footer">
+            Version <span class="version">2.0.0</span> | Powered by ESP Web Tools
+        </div>
     </div>
 
-    <script>
-        async function checkSerialPorts() {
-            const output = document.getElementById('diagnostic-output');
-            output.innerHTML = 'Checking...<br>';
+    <script type="module">
+        import { WebSerial } from "https://cdn.jsdelivr.net/npm/esp-web-install-js@1/bundle.js";
+
+        const button = document.getElementById('install-btn');
+        const status = document.getElementById('status');
+        const progress = document.getElementById('progress');
+        const progressFill = document.getElementById('progress-fill');
+        const progressText = document.getElementById('progress-text');
+
+        // Manifest configuration
+        const manifest = {
+            name: "My ESP32 tele upload",
+            version: "1.0.0",
+            builds: [
+                {
+                    chipFamily: "ESP32",
+                    parts: [
+                        {
+                            path: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.bootloader.bin",
+                            offset: 4096
+                        },
+                        {
+                            path: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/sketch_mar22b.ino.partitions.bin",
+                            offset: 32768
+                        },
+                        {
+                            path: "https://raw.githubusercontent.com/chandrurn/esp32-web-installer/main/ID_Teller.bin",
+                            offset: 65536
+                        }
+                    ]
+                }
+            ]
+        };
+
+        button.addEventListener('click', async () => {
+            button.disabled = true;
+            status.className = 'info';
+            status.innerHTML = '⏳ Starting installation...';
+            progress.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.innerHTML = '0%';
 
             try {
-                // Check if Web Serial API is available
-                if (!navigator.serial) {
-                    output.innerHTML += '❌ Web Serial API not available<br>';
-                    output.innerHTML += '⚠️ Your browser does not support Web Serial API<br>';
-                    output.innerHTML += '✅ Use Chrome, Edge, or Opera instead<br>';
-                    return;
+                const webserial = new WebSerial();
+
+                // Request port
+                status.innerHTML = '⏳ Requesting serial port...';
+                const port = await webserial.requestPort();
+
+                if (!port) {
+                    throw new Error('No port selected');
                 }
-                
-                output.innerHTML += '✅ Web Serial API is available<br><br>';
 
-                // Get list of ports
-                const ports = await navigator.serial.getPorts();
-                output.innerHTML += `Found ${ports.length} port(s):<br>`;
+                status.innerHTML = '⏳ Connecting to device...';
+                await port.connect();
 
-                if (ports.length === 0) {
-                    output.innerHTML += '❌ No ports detected<br><br>';
-                    output.innerHTML += '💡 Troubleshooting:<br>';
-                    output.innerHTML += '- Check USB cable (data-capable, not power-only)<br>';
-                    output.innerHTML += '- Install USB drivers for your ESP32 board<br>';
-                    output.innerHTML += '- Close Arduino IDE or serial monitor if open<br>';
-                    output.innerHTML += '- Try a different USB port<br>';
-                    output.innerHTML += '- Restart the browser<br>';
-                } else {
-                    ports.forEach((port, index) => {
-                        const info = port.getInfo();
-                        output.innerHTML += `<br>Port ${index + 1}:<br>`;
-                        output.innerHTML += `  Vendor ID: ${info.usbVendorId || 'N/A'}<br>`;
-                        output.innerHTML += `  Product ID: ${info.usbProductId || 'N/A'}<br>`;
+                status.innerHTML = '⏳ Downloading firmware...';
+
+                // Download and flash each part
+                const build = manifest.builds[0];
+                let totalSize = 0;
+                const images = [];
+
+                for (const part of build.parts) {
+                    const response = await fetch(part.path);
+                    const buffer = await response.arrayBuffer();
+                    images.push({
+                        data: new Uint8Array(buffer),
+                        offset: part.offset
                     });
-                    output.innerHTML += '<br>✅ Your device should be detected by the installer!<br>';
+                    totalSize += buffer.byteLength;
                 }
+
+                status.innerHTML = '⏳ Flashing firmware...';
+
+                // Flash images
+                let bytesFlashed = 0;
+                for (const image of images) {
+                    await webserial.write(image.data, image.offset);
+                    bytesFlashed += image.data.length;
+                    const percent = Math.round((bytesFlashed / totalSize) * 100);
+                    progressFill.style.width = percent + '%';
+                    progressText.innerHTML = percent + '%';
+                }
+
+                status.className = 'success';
+                status.innerHTML = '✅ Installation complete! Your ESP32 is ready to use. You can now disconnect the device.';
+                progressFill.style.width = '100%';
+                progressText.innerHTML = '100%';
+
             } catch (error) {
-                output.innerHTML += `❌ Error: ${error.message}<br>`;
+                status.className = 'error';
+                status.innerHTML = `❌ Installation failed: ${error.message}<br><br>Make sure:<br>• Your ESP32 is connected<br>• Using Chrome/Edge/Opera<br>• No other program is using the serial port`;
+                button.disabled = false;
             }
+        });
+
+        // Check for Web Serial API support on load
+        if (!navigator.serial) {
+            button.disabled = true;
+            status.className = 'error';
+            status.innerHTML = '❌ Web Serial API is not supported in your browser. Please use Chrome, Edge, or Opera.';
         }
     </script>
 </body>
