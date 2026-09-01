@@ -1,7 +1,8 @@
 {
   "name": "My ESP32 tele upload",
   "version": "1.0.0",
-  "description": "Web-based firmware installer for ESP32 telemetry upload device",
+  "description": "Web-based firmware installer for ESP32",
+  "url": "https://github.com/chandrurn/esp32-web-installer",
   "builds": [
     {
       "chipFamily": "ESP32",
